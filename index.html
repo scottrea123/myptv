@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Wave Canada IPTV Viewer</title>
+<title>Wave Canada IPTV Viewer5</title>
 <style>
   body {
     margin: 0;
@@ -66,15 +66,6 @@ const username = "6743";
 const password = "4326";
 const baseAPI = `${server}/player_api.php?username=${username}&password=${password}`;
 
-// Auto-scroll focused link into view
-document.addEventListener("focusin", e => {
-  if (e.target.tagName === "A") {
-    const parent = e.target.parentElement;
-    if (parent.scrollHeight > parent.clientHeight) {
-      parent.scrollTop = e.target.offsetTop - parent.offsetTop - 50;
-    }
-  }
-});
 
 // Load categories
 async function fetchCategories() {
@@ -113,6 +104,7 @@ async function fetchStreams(categoryId) {
       const streamUrl = `${server}/live/${username}/${password}/${stream.stream_id}.ts`;
       const vlcUrl = `vlc://${streamUrl.replace("https://", "")}`;
       window.location.href = vlcUrl; // Launch VLC immediately
+      navigator.clipboard.writeText(streamUrl);
     };
 
     container.appendChild(link);
