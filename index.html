@@ -2,35 +2,54 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Wave Canada Live Categories</title>
+<title>Wave Canada Viewer</title>
 <style>
   body {
-    display: flex;
-    font-family: sans-serif;
     margin: 0;
-    padding: 0;
-  }
-  #categories, #streams {
-    padding: 10px;
+    font-family: sans-serif;
+    display: flex;
+    flex-direction: column;
     height: 100vh;
-    overflow-y: auto;
   }
+
+  #main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
   #categories {
     width: 30%;
     border-right: 1px solid #ccc;
-    background: #f8f8f8;
+    padding: 10px;
+    overflow-y: auto;
+    background: #f5f5f5;
   }
+
   #streams {
     flex: 1;
-    background: #fff;
+    padding: 10px;
+    overflow-y: auto;
   }
+
+  #bottomPane {
+    height: 80px;
+    border-top: 1px solid #ccc;
+    padding: 10px;
+    background: #222;
+    color: #0f0;
+    font-family: monospace;
+    overflow-x: auto;
+  }
+
   a {
     display: block;
     margin: 5px 0;
-    cursor: pointer;
     text-decoration: none;
     color: #007bff;
+    cursor: pointer;
   }
+
   a:hover {
     text-decoration: underline;
   }
@@ -38,22 +57,31 @@
 </head>
 <body>
 
-<div id="categories">
-  <h3>Categories</h3>
+<div id="main">
+  <div id="categories">
+    <h3>Categories</h3>
+  </div>
+
+  <div id="streams">
+    <h3>Streams</h3>
+    <p>Select a category</p>
+  </div>
 </div>
 
-<div id="streams">
-  <h3>Streams</h3>
-  <p>Select a category to see streams</p>
+<div id="bottomPane">
+  Stream URL will appear here
 </div>
 
 <script>
+const baseURL = "https://wavecanada.app/player_api.php?username=6743&password=4326";
+
 async function fetchCategories() {
-  const url = "https://wavecanada.app/player_api.php?username=6743&password=4326&action=get_live_categories";
+  const url = `${baseURL}&action=get_live_categories`;
+  const container = document.getElementById("categories");
+
   try {
     const res = await fetch(url);
     const categories = await res.json();
-    const container = document.getElementById("categories");
 
     categories.forEach(cat => {
       const link = document.createElement("a");
@@ -62,41 +90,42 @@ async function fetchCategories() {
       link.onclick = () => fetchStreams(cat.category_id);
       container.appendChild(link);
     });
+
   } catch (err) {
-    console.error(err);
-    document.getElementById("categories").textContent = "Failed to load categories";
+    container.innerHTML += "<p>Failed to load categories</p>";
   }
 }
 
 async function fetchStreams(categoryId) {
-  const url = `https://wavecanada.app/player_api.php?username=6743&password=4326&action=get_live_streams&category_id=${categoryId}`;
+  const url = `${baseURL}&action=get_live_streams&category_id=${categoryId}`;
   const container = document.getElementById("streams");
+
   container.innerHTML = "<h3>Streams</h3><p>Loading...</p>";
 
   try {
     const res = await fetch(url);
     const streams = await res.json();
 
-    container.innerHTML = "<h3>Streams</h3>"; // clear previous
+    container.innerHTML = "<h3>Streams</h3>";
+
     streams.forEach(stream => {
       const link = document.createElement("a");
       link.textContent = stream.name || stream.stream_name;
-      // replace this with actual playback link if needed
-      link.href = stream.url || "#";
-      link.target = "_blank"; // open in new tab
+      link.href = "#";
+
+      link.onclick = () => {
+        const streamUrl = stream.url || stream.stream_url || "No URL found";
+        document.getElementById("bottomPane").textContent = streamUrl;
+      };
+
       container.appendChild(link);
     });
 
-    if (streams.length === 0) {
-      container.innerHTML += "<p>No streams in this category</p>";
-    }
   } catch (err) {
-    console.error(err);
     container.innerHTML += "<p>Failed to load streams</p>";
   }
 }
 
-// initialize
 fetchCategories();
 </script>
 
