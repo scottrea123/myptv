@@ -9,22 +9,23 @@
     margin: 0;
     font-family: Arial, sans-serif;
     display: flex;
-    flex-direction: column;
     height: 100vh;
   }
 
-  #main {
-    display: flex;
-    flex: 1;
-    overflow: hidden;
-  }
-
+  /* LEFT PANE - full height */
   #categories {
     width: 30%;
     border-right: 1px solid #ccc;
     padding: 10px;
     overflow-y: auto;
     background: #f4f4f4;
+  }
+
+  /* RIGHT SIDE WRAPPER (streams + bottom stacked) */
+  #rightSide {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
   }
 
   #streams {
@@ -70,20 +71,24 @@
 
 <body>
 
-<div id="main">
-  <div id="categories">
-    <h3>Categories</h3>
-  </div>
+<!-- LEFT -->
+<div id="categories">
+  <h3>Categories</h3>
+</div>
+
+<!-- RIGHT (stacked) -->
+<div id="rightSide">
 
   <div id="streams">
     <h3>Streams</h3>
     <p>Select a category</p>
   </div>
-</div>
 
-<div id="bottomPane">
-  <div id="urlText">Stream URL will appear here</div>
-  <a id="vlcLink" href="#" target="_blank"></a>
+  <div id="bottomPane">
+    <div id="urlText">Stream URL will appear here</div>
+    <a id="vlcLink" href="#"></a>
+  </div>
+
 </div>
 
 <script>
@@ -93,6 +98,7 @@ const password = "4326";
 
 const baseAPI = `${server}/player_api.php?username=${username}&password=${password}`;
 
+// Load categories
 async function fetchCategories() {
   const url = `${baseAPI}&action=get_live_categories`;
   const container = document.getElementById("categories");
@@ -105,9 +111,7 @@ async function fetchCategories() {
       const link = document.createElement("a");
       link.textContent = cat.category_name;
       link.href = "#";
-
       link.onclick = () => fetchStreams(cat.category_id);
-
       container.appendChild(link);
     });
 
@@ -117,6 +121,7 @@ async function fetchCategories() {
   }
 }
 
+// Load streams
 async function fetchStreams(categoryId) {
   const url = `${baseAPI}&action=get_live_streams&category_id=${categoryId}`;
   const container = document.getElementById("streams");
@@ -140,14 +145,12 @@ async function fetchStreams(categoryId) {
         // Show URL text
         document.getElementById("urlText").textContent = streamUrl;
 
-        // Build VLC Android intent link
-        const vlcIntent = 
-          `intent://${streamUrl.replace("https://", "")}` +
-          `#Intent;package=org.videolan.vlc;type=video/*;end`;
+        // VLC scheme
+        const vlcUrl = `vlc://${streamUrl.replace("https://", "")}`;
 
         const vlcLink = document.getElementById("vlcLink");
-        vlcLink.href = vlcIntent;
-        vlcLink.textContent = "Open in VLC (Android)";
+        vlcLink.href = vlcUrl;
+        vlcLink.textContent = "Open in VLC";
       };
 
       container.appendChild(link);
