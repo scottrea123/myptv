@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>Wave Canada IPTV Viewer</title>
-
 <style>
   body {
     margin: 0;
@@ -12,6 +11,7 @@
     height: 100vh;
   }
 
+  /* LEFT - categories */
   #categories {
     width: 30%;
     border-right: 1px solid #444;
@@ -20,6 +20,7 @@
     background: #222;
   }
 
+  /* RIGHT SIDE - streams + bottom stacked */
   #rightSide {
     flex: 1;
     display: flex;
@@ -40,6 +41,7 @@
     background: #000;
     color: #00ff00;
     font-family: monospace;
+    overflow-x: auto;
   }
 
   a {
@@ -72,8 +74,8 @@
 <div id="rightSide">
   <div id="streams">
     <h3>Streams</h3>
+    <p>Select a category</p>
   </div>
-
   <div id="bottomPane">
     <div id="urlText">Stream URL will appear here</div>
     <a id="vlcLink" href="#" tabindex="0"></a>
@@ -86,35 +88,17 @@ const username = "6743";
 const password = "4326";
 const baseAPI = `${server}/player_api.php?username=${username}&password=${password}`;
 
-let lastCategory = null;
-let lastStream = null;
-
-// FORCE SCROLL ON FOCUS (important for Silk)
-document.addEventListener("focusin", function(e) {
+// Simple scroll on focus for Silk
+document.addEventListener("focusin", e => {
   if (e.target.tagName === "A") {
     const parent = e.target.parentElement;
-    parent.scrollTop = e.target.offsetTop - parent.offsetTop - 50;
+    if (parent.scrollHeight > parent.clientHeight) {
+      parent.scrollTop = e.target.offsetTop - parent.offsetTop - 50;
+    }
   }
 });
 
-// LEFT / RIGHT DPAD NAVIGATION
-document.addEventListener("keydown", function(e) {
-
-  if (e.key === "ArrowRight" && document.activeElement.closest("#categories")) {
-    if (lastStream) {
-      lastStream.focus();
-    }
-  }
-
-  if (e.key === "ArrowLeft" && document.activeElement.closest("#streams")) {
-    if (lastCategory) {
-      lastCategory.focus();
-    }
-  }
-
-});
-
-// Load Categories
+// Fetch categories
 async function fetchCategories() {
   const res = await fetch(`${baseAPI}&action=get_live_categories`);
   const categories = await res.json();
@@ -125,27 +109,18 @@ async function fetchCategories() {
     link.textContent = cat.category_name;
     link.href = "#";
     link.tabIndex = 0;
-
     link.onclick = () => fetchStreams(cat.category_id);
-
-    link.onfocus = () => {
-      lastCategory = link;
-    };
-
     container.appendChild(link);
 
-    if (index === 0) {
-      setTimeout(() => link.focus(), 200);
-    }
+    if (index === 0) setTimeout(() => link.focus(), 200);
   });
 }
 
-// Load Streams
+// Fetch streams
 async function fetchStreams(categoryId) {
   const res = await fetch(`${baseAPI}&action=get_live_streams&category_id=${categoryId}`);
   const streams = await res.json();
   const container = document.getElementById("streams");
-
   container.innerHTML = "<h3>Streams</h3>";
 
   streams.forEach((stream, index) => {
@@ -157,22 +132,14 @@ async function fetchStreams(categoryId) {
     link.onclick = () => {
       const streamUrl = `${server}/live/${username}/${password}/${stream.stream_id}.ts`;
       document.getElementById("urlText").textContent = streamUrl;
-
       const vlcUrl = `vlc://${streamUrl.replace("https://", "")}`;
       const vlcLink = document.getElementById("vlcLink");
       vlcLink.href = vlcUrl;
       vlcLink.textContent = "Open in VLC";
     };
 
-    link.onfocus = () => {
-      lastStream = link;
-    };
-
     container.appendChild(link);
-
-    if (index === 0) {
-      setTimeout(() => link.focus(), 200);
-    }
+    if (index === 0) setTimeout(() => link.focus(), 200);
   });
 }
 
