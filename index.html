@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Wave Canada IPTV Viewer X</title>
+<title>Wave Canada IPTV Viewer</title>
 <style>
   body {
     margin: 0;
@@ -51,63 +51,82 @@
 <script>
 const server = "https://wavecanada.app";
 const username = "6743";
-const password = "4326";
-const baseAPI = `${server}/player_api.php?username=${username}&password=${password}`;
+let password = "";
 
+// Prompt for password on load
+window.addEventListener("load", () => {
+  password = prompt("Enter your password for Wave Canada:");
+  if (!password) {
+    document.getElementById("content").innerHTML = "<p>Password required to continue.</p>";
+  } else {
+    showCategories();
+  }
+});
+
+const baseAPI = () => `${server}/player_api.php?username=${username}&password=${password}`;
+
+// Show categories
 async function showCategories() {
-  const res = await fetch(`${baseAPI}&action=get_live_categories`);
-  const categories = await res.json();
-  const container = document.getElementById("content");
-  container.innerHTML = '';
+  try {
+    const res = await fetch(`${baseAPI()}&action=get_live_categories`);
+    const categories = await res.json();
+    const container = document.getElementById("content");
+    container.innerHTML = '';
 
-  categories.forEach((cat, index) => {
-    const btn = document.createElement("button");
-    btn.textContent = cat.category_name;
-    btn.onclick = () => showStreams(cat);
-    container.appendChild(btn);
+    categories.forEach((cat, index) => {
+      const btn = document.createElement("button");
+      btn.textContent = cat.category_name;
+      btn.onclick = () => showStreams(cat);
+      container.appendChild(btn);
 
-    if (index === 0) setTimeout(() => btn.focus(), 200);
-  });
+      if (index === 0) setTimeout(() => btn.focus(), 200);
+    });
+  } catch (err) {
+    document.getElementById("content").innerHTML = "<p>Failed to load categories. Check password or network.</p>";
+    console.error(err);
+  }
 }
 
+// Show streams for selected category
 async function showStreams(category) {
-  const res = await fetch(`${baseAPI}&action=get_live_streams&category_id=${category.category_id}`);
-  const streams = await res.json();
+  try {
+    const res = await fetch(`${baseAPI()}&action=get_live_streams&category_id=${category.category_id}`);
+    const streams = await res.json();
+    const container = document.getElementById("content");
+    container.innerHTML = '';
 
-  // Rewrite body content
-  const container = document.getElementById("content");
-  container.innerHTML = '';
+    // Back button
+    const backBtn = document.createElement("button");
+    backBtn.textContent = "← Back to Categories";
+    backBtn.onclick = () => showCategories();
+    container.appendChild(backBtn);
 
-  // Back button
-  const backBtn = document.createElement("button");
-  backBtn.textContent = "← Back to Categories";
-  backBtn.onclick = () => showCategories();
-  container.appendChild(backBtn);
+    // Title
+    const title = document.createElement("h3");
+    title.textContent = category.category_name + " Streams";
+    container.appendChild(title);
 
-  // Title
-  const title = document.createElement("h3");
-  title.textContent = category.category_name + " Streams";
-  container.appendChild(title);
+    // Stream buttons
+    streams.forEach((stream, index) => {
+      const btn = document.createElement("button");
+      btn.textContent = stream.name;
+      btn.onclick = () => {
+        const streamUrl = `${server}/live/${username}/${password}/${stream.stream_id}.ts`;
+        const vlcUrl = `vlc://${streamUrl.replace("https://", "")}`;
+        window.location.href = vlcUrl; // Launch VLC
+      };
+      container.appendChild(btn);
 
-  // Stream buttons
-  streams.forEach((stream, index) => {
-    const btn = document.createElement("button");
-    btn.textContent = stream.name;
-    btn.onclick = () => {
-      const streamUrl = `${server}/live/${username}/${password}/${stream.stream_id}.ts`;
-      const vlcUrl = `vlc://${streamUrl.replace("https://", "")}`;
-      window.location.href = vlcUrl; // Launch VLC immediately
-    };
-    container.appendChild(btn);
-
-    if (index === 0) setTimeout(() => btn.focus(), 200);
-  });
+      if (index === 0) setTimeout(() => btn.focus(), 200);
+    });
+  } catch (err) {
+    document.getElementById("content").innerHTML = "<p>Failed to load streams. Check password or network.</p>";
+    console.error(err);
+  }
 }
-
-// Initial load
-showCategories();
 </script>
 
 </body>
 </html>
+
 
