@@ -34,13 +34,20 @@
   }
 
   #bottomPane {
-    height: 90px;
+    height: 110px;
     border-top: 1px solid #ccc;
     padding: 10px;
     background: #111;
     color: #00ff00;
     font-family: monospace;
     overflow-x: auto;
+  }
+
+  #vlcLink {
+    display: inline-block;
+    margin-top: 8px;
+    color: #00bfff;
+    font-family: Arial, sans-serif;
   }
 
   a {
@@ -75,7 +82,8 @@
 </div>
 
 <div id="bottomPane">
-  Stream URL will appear here
+  <div id="urlText">Stream URL will appear here</div>
+  <a id="vlcLink" href="#" target="_blank"></a>
 </div>
 
 <script>
@@ -85,7 +93,6 @@ const password = "4326";
 
 const baseAPI = `${server}/player_api.php?username=${username}&password=${password}`;
 
-// Load categories
 async function fetchCategories() {
   const url = `${baseAPI}&action=get_live_categories`;
   const container = document.getElementById("categories");
@@ -99,9 +106,7 @@ async function fetchCategories() {
       link.textContent = cat.category_name;
       link.href = "#";
 
-      link.onclick = () => {
-        fetchStreams(cat.category_id);
-      };
+      link.onclick = () => fetchStreams(cat.category_id);
 
       container.appendChild(link);
     });
@@ -112,7 +117,6 @@ async function fetchCategories() {
   }
 }
 
-// Load streams for category
 async function fetchStreams(categoryId) {
   const url = `${baseAPI}&action=get_live_streams&category_id=${categoryId}`;
   const container = document.getElementById("streams");
@@ -132,7 +136,18 @@ async function fetchStreams(categoryId) {
 
       link.onclick = () => {
         const streamUrl = `${server}/live/${username}/${password}/${stream.stream_id}.ts`;
-        document.getElementById("bottomPane").textContent = streamUrl;
+
+        // Show URL text
+        document.getElementById("urlText").textContent = streamUrl;
+
+        // Build VLC Android intent link
+        const vlcIntent = 
+          `intent://${streamUrl.replace("https://", "")}` +
+          `#Intent;package=org.videolan.vlc;type=video/*;end`;
+
+        const vlcLink = document.getElementById("vlcLink");
+        vlcLink.href = vlcIntent;
+        vlcLink.textContent = "Open in VLC (Android)";
       };
 
       container.appendChild(link);
@@ -148,7 +163,6 @@ async function fetchStreams(categoryId) {
   }
 }
 
-// Initialize
 fetchCategories();
 </script>
 
