@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Wave Canada IPTV Viewer 4</title>
+<title>Wave Canada IPTV Viewer</title>
 <style>
   body {
     margin: 0;
@@ -11,14 +11,16 @@
     height: 100vh;
   }
 
+  /* LEFT PANE: categories */
   #categories {
-    width: 30%;
+    width: 35%;
     border-right: 1px solid #444;
     padding: 10px;
     overflow-y: auto;
     background: #222;
   }
 
+  /* RIGHT PANE: streams */
   #streams {
     flex: 1;
     padding: 10px;
@@ -49,11 +51,11 @@
 </head>
 <body>
 
-<div id="categories" tabindex="0">
+<div id="categories">
   <h3>Categories</h3>
 </div>
 
-<div id="streams" tabindex="0">
+<div id="streams">
   <h3>Streams</h3>
   <p>Select a category</p>
 </div>
@@ -64,34 +66,13 @@ const username = "6743";
 const password = "4326";
 const baseAPI = `${server}/player_api.php?username=${username}&password=${password}`;
 
-let lastCategory = null;
-let lastStream = null;
-
-// Auto-scroll focused item into view (Silk)
+// Auto-scroll focused link into view
 document.addEventListener("focusin", e => {
   if (e.target.tagName === "A") {
     const parent = e.target.parentElement;
     if (parent.scrollHeight > parent.clientHeight) {
       parent.scrollTop = e.target.offsetTop - parent.offsetTop - 50;
     }
-  }
-});
-
-// Handle LEFT/RIGHT DPAD for switching panes
-document.addEventListener("keydown", e => {
-  const active = document.activeElement;
-  if (!active) return;
-
-  // LEFT arrow: streams -> categories
-  if (e.key === "ArrowLeft" && active.closest("#streams")) {
-    if (lastCategory) lastCategory.focus();
-    e.preventDefault();
-  }
-
-  // RIGHT arrow: categories -> streams
-  if (e.key === "ArrowRight" && active.closest("#categories")) {
-    if (lastStream) lastStream.focus();
-    e.preventDefault();
   }
 });
 
@@ -106,22 +87,20 @@ async function fetchCategories() {
     link.textContent = cat.category_name;
     link.href = "#";
     link.tabIndex = 0;
-
     link.onclick = () => fetchStreams(cat.category_id);
-
-    link.onfocus = () => lastCategory = link;
-
     container.appendChild(link);
 
+    // Auto-focus first category
     if (index === 0) setTimeout(() => link.focus(), 200);
   });
 }
 
-// Load streams
+// Load streams for selected category
 async function fetchStreams(categoryId) {
   const res = await fetch(`${baseAPI}&action=get_live_streams&category_id=${categoryId}`);
   const streams = await res.json();
   const container = document.getElementById("streams");
+
   container.innerHTML = "<h3>Streams</h3>";
 
   streams.forEach((stream, index) => {
@@ -133,13 +112,12 @@ async function fetchStreams(categoryId) {
     link.onclick = () => {
       const streamUrl = `${server}/live/${username}/${password}/${stream.stream_id}.ts`;
       const vlcUrl = `vlc://${streamUrl.replace("https://", "")}`;
-      window.location.href = vlcUrl; // launch VLC immediately
+      window.location.href = vlcUrl; // Launch VLC immediately
     };
-
-    link.onfocus = () => lastStream = link;
 
     container.appendChild(link);
 
+    // Auto-focus first stream
     if (index === 0) setTimeout(() => link.focus(), 200);
   });
 }
@@ -149,4 +127,3 @@ fetchCategories();
 
 </body>
 </html>
-
