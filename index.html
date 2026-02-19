@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Wave Canada IPTV Viewer 2</title>
+<title>Wave Canada IPTV Viewer 3</title>
 <style>
   body {
     margin: 0;
@@ -68,14 +68,7 @@ const password = "4326";
 const baseAPI = `${server}/player_api.php?username=${username}&password=${password}`;
 
 // Auto-scroll focused links (for Silk remote)
-document.addEventListener("focusin", e => {
-  if (e.target.tagName === "A") {
-    const parent = e.target.parentElement;
-    if (parent.scrollHeight > parent.clientHeight) {
-      parent.scrollTop = e.target.offsetTop - parent.offsetTop - 50;
-    }
-  }
-});
+
 
 // Load categories
 async function fetchCategories() {
@@ -105,7 +98,7 @@ async function fetchStreams(categoryId) {
   streams.forEach((stream, index) => {
     const link = document.createElement("a");
     link.textContent = stream.name;
-    link.href = "#";
+    link.href =  `${server}/live/${username}/${password}/${stream.stream_id}.ts`;
     link.tabIndex = 0;
 
     link.onclick = () => {
