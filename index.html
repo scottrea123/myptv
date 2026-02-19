@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Wave Canada IPTV Viewer5</title>
+<title>Wave Canada IPTV Viewer 6</title>
 <style>
   body {
     margin: 0;
     font-family: Arial, sans-serif;
     display: flex;
-    height: 100vh;
+    height: 90vh;
   }
 
   /* LEFT PANE: categories */
@@ -16,7 +16,7 @@
     width: 35%;
     border-right: 1px solid #444;
     padding: 10px;
-    overflow-y: auto;
+    overflow-y: scroll;
     background: #222;
   }
 
@@ -24,7 +24,7 @@
   #streams {
     flex: 1;
     padding: 10px;
-    overflow-y: auto;
+    overflow-y: scroll;
     background: #111;
   }
 
@@ -81,8 +81,7 @@ async function fetchCategories() {
     link.onclick = () => fetchStreams(cat.category_id);
     container.appendChild(link);
 
-    // Auto-focus first category
-    if (index === 0) setTimeout(() => link.focus(), 200);
+    
   });
 }
 
