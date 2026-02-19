@@ -9,43 +9,53 @@
     font-family: Arial, sans-serif;
     background: #111;
     color: #fff;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
     padding: 20px;
   }
 
   h1, h3 {
-    color: white;
+    text-align: center;
     margin: 10px 0;
   }
 
+  #content {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+    margin-top: 20px;
+  }
+
   button {
-    width: 80%;
-    max-width: 600px;
-    margin: 12px 0;
-    padding: 20px;
-    font-size: 22px;
+    padding: 12px;
+    font-size: 16px;
     background-color: #00bfff;
     color: black;
     border: none;
-    border-radius: 12px;
+    border-radius: 8px;
     cursor: pointer;
-    text-align: center;
   }
 
   button:focus {
-    outline: 4px solid #fff;
+    outline: 3px solid white;
     background-color: #0077aa;
     color: white;
+  }
+
+  .top-button {
+    grid-column: 1 / -1;
+    background-color: #444;
+    color: white;
+  }
+
+  .top-button:focus {
+    background-color: #666;
   }
 </style>
 </head>
 <body>
 
-<h1>Categories</h1>
+<h1>Wave Canada IPTV</h1>
 <div id="content">
-  <p>Loading categories...</p>
+  <p>Loading...</p>
 </div>
 
 <script>
@@ -53,80 +63,89 @@ const server = "https://wavecanada.app";
 const username = "6743";
 let password = "";
 
-// Prompt for password on load
+// Check for saved password
 window.addEventListener("load", () => {
-  password = prompt("Enter your password for Wave Canada:");
-  if (!password) {
-    document.getElementById("content").innerHTML = "<p>Password required to continue.</p>";
-  } else {
+  const saved = localStorage.getItem("wave_password");
+
+  if (saved) {
+    password = saved;
     showCategories();
+  } else {
+    askPassword();
   }
 });
 
-const baseAPI = () => `${server}/player_api.php?username=${username}&password=${password}`;
+function askPassword() {
+  const entered = prompt("Enter your Wave Canada password:");
+  if (!entered) {
+    document.getElementById("content").innerHTML =
+      "<p>Password required to continue.</p>";
+    return;
+  }
+
+  password = entered;
+
+  const remember = confirm("Remember password on this device?");
+  if (remember) {
+    localStorage.setItem("wave_password", password);
+  }
+
+  showCategories();
+}
+
+const baseAPI = () =>
+  `${server}/player_api.php?username=${username}&password=${password}`;
 
 // Show categories
 async function showCategories() {
-  try {
-    const res = await fetch(`${baseAPI()}&action=get_live_categories`);
-    const categories = await res.json();
-    const container = document.getElementById("content");
-    container.innerHTML = '';
+  const res = await fetch(`${baseAPI()}&action=get_live_categories`);
+  const categories = await res.json();
+  const container = document.getElementById("content");
+  container.innerHTML = "";
 
-    categories.forEach((cat, index) => {
-      const btn = document.createElement("button");
-      btn.textContent = cat.category_name;
-      btn.onclick = () => showStreams(cat);
-      container.appendChild(btn);
+  categories.forEach((cat, index) => {
+    const btn = document.createElement("button");
+    btn.textContent = cat.category_name;
+    btn.onclick = () => showStreams(cat);
+    container.appendChild(btn);
 
-      if (index === 0) setTimeout(() => btn.focus(), 200);
-    });
-  } catch (err) {
-    document.getElementById("content").innerHTML = "<p>Failed to load categories. Check password or network.</p>";
-    console.error(err);
-  }
+    if (index === 0) setTimeout(() => btn.focus(), 200);
+  });
 }
 
-// Show streams for selected category
+// Show streams
 async function showStreams(category) {
-  try {
-    const res = await fetch(`${baseAPI()}&action=get_live_streams&category_id=${category.category_id}`);
-    const streams = await res.json();
-    const container = document.getElementById("content");
-    container.innerHTML = '';
+  const res = await fetch(
+    `${baseAPI()}&action=get_live_streams&category_id=${category.category_id}`
+  );
+  const streams = await res.json();
+  const container = document.getElementById("content");
+  container.innerHTML = "";
 
-    // Back button
-    const backBtn = document.createElement("button");
-    backBtn.textContent = "← Back to Categories";
-    backBtn.onclick = () => showCategories();
-    container.appendChild(backBtn);
+  // Back button
+  const backBtn = document.createElement("button");
+  backBtn.textContent = "← Back to Categories";
+  backBtn.classList.add("top-button");
+  backBtn.onclick = showCategories;
+  container.appendChild(backBtn);
 
-    // Title
-    const title = document.createElement("h3");
-    title.textContent = category.category_name + " Streams";
-    container.appendChild(title);
+  streams.forEach((stream, index) => {
+    const btn = document.createElement("button");
+    btn.textContent = stream.name;
 
-    // Stream buttons
-    streams.forEach((stream, index) => {
-      const btn = document.createElement("button");
-      btn.textContent = stream.name;
-      btn.onclick = () => {
-        const streamUrl = `${server}/live/${username}/${password}/${stream.stream_id}.ts`;
-        const vlcUrl = `vlc://${streamUrl.replace("https://", "")}`;
-        window.location.href = vlcUrl; // Launch VLC
-      };
-      container.appendChild(btn);
+    btn.onclick = () => {
+      const streamUrl =
+        `${server}/live/${username}/${password}/${stream.stream_id}.ts`;
+      const vlcUrl = `vlc://${streamUrl.replace("https://", "")}`;
+      window.location.href = vlcUrl;
+    };
 
-      if (index === 0) setTimeout(() => btn.focus(), 200);
-    });
-  } catch (err) {
-    document.getElementById("content").innerHTML = "<p>Failed to load streams. Check password or network.</p>";
-    console.error(err);
-  }
+    container.appendChild(btn);
+
+    if (index === 0) setTimeout(() => btn.focus(), 200);
+  });
 }
 </script>
 
 </body>
 </html>
-
-
