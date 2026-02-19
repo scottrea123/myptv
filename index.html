@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Wave Canada IPTV Viewer 3</title>
+<title>Wave Canada IPTV Viewer 4</title>
 <style>
   body {
     margin: 0;
@@ -11,7 +11,6 @@
     height: 100vh;
   }
 
-  /* LEFT PANE */
   #categories {
     width: 30%;
     border-right: 1px solid #444;
@@ -20,7 +19,6 @@
     background: #222;
   }
 
-  /* RIGHT PANE */
   #streams {
     flex: 1;
     padding: 10px;
@@ -49,14 +47,13 @@
   }
 </style>
 </head>
-
 <body>
 
-<div id="categories">
+<div id="categories" tabindex="0">
   <h3>Categories</h3>
 </div>
 
-<div id="streams">
+<div id="streams" tabindex="0">
   <h3>Streams</h3>
   <p>Select a category</p>
 </div>
@@ -67,8 +64,36 @@ const username = "6743";
 const password = "4326";
 const baseAPI = `${server}/player_api.php?username=${username}&password=${password}`;
 
-// Auto-scroll focused links (for Silk remote)
+let lastCategory = null;
+let lastStream = null;
 
+// Auto-scroll focused item into view (Silk)
+document.addEventListener("focusin", e => {
+  if (e.target.tagName === "A") {
+    const parent = e.target.parentElement;
+    if (parent.scrollHeight > parent.clientHeight) {
+      parent.scrollTop = e.target.offsetTop - parent.offsetTop - 50;
+    }
+  }
+});
+
+// Handle LEFT/RIGHT DPAD for switching panes
+document.addEventListener("keydown", e => {
+  const active = document.activeElement;
+  if (!active) return;
+
+  // LEFT arrow: streams -> categories
+  if (e.key === "ArrowLeft" && active.closest("#streams")) {
+    if (lastCategory) lastCategory.focus();
+    e.preventDefault();
+  }
+
+  // RIGHT arrow: categories -> streams
+  if (e.key === "ArrowRight" && active.closest("#categories")) {
+    if (lastStream) lastStream.focus();
+    e.preventDefault();
+  }
+});
 
 // Load categories
 async function fetchCategories() {
@@ -81,7 +106,11 @@ async function fetchCategories() {
     link.textContent = cat.category_name;
     link.href = "#";
     link.tabIndex = 0;
+
     link.onclick = () => fetchStreams(cat.category_id);
+
+    link.onfocus = () => lastCategory = link;
+
     container.appendChild(link);
 
     if (index === 0) setTimeout(() => link.focus(), 200);
@@ -98,16 +127,16 @@ async function fetchStreams(categoryId) {
   streams.forEach((stream, index) => {
     const link = document.createElement("a");
     link.textContent = stream.name;
-    link.href =  `${server}/live/${username}/${password}/${stream.stream_id}.ts`;
+    link.href = "#";
     link.tabIndex = 0;
 
     link.onclick = () => {
       const streamUrl = `${server}/live/${username}/${password}/${stream.stream_id}.ts`;
       const vlcUrl = `vlc://${streamUrl.replace("https://", "")}`;
-
-      // Launch VLC (opens app on Fire Stick)
-      window.location.href = vlcUrl;
+      window.location.href = vlcUrl; // launch VLC immediately
     };
+
+    link.onfocus = () => lastStream = link;
 
     container.appendChild(link);
 
@@ -120,3 +149,4 @@ fetchCategories();
 
 </body>
 </html>
+
