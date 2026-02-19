@@ -2,62 +2,50 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Wave Canada IPTV Viewer 6</title>
+<title>Wave Canada IPTV Viewer</title>
 <style>
   body {
     margin: 0;
     font-family: Arial, sans-serif;
-    display: flex;
-    height: 90vh;
-  }
-
-  /* LEFT PANE: categories */
-  #categories {
-    width: 35%;
-    border-right: 1px solid #444;
-    padding: 10px;
-    overflow-y: scroll;
-    background: #222;
-  }
-
-  /* RIGHT PANE: streams */
-  #streams {
-    flex: 1;
-    padding: 10px;
-    overflow-y: scroll;
     background: #111;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
   }
 
-  a {
-    display: block;
-    margin: 6px 0;
-    padding: 8px;
-    text-decoration: none;
-    color: #00bfff;
-    border-radius: 6px;
-  }
-
-  a:focus {
-    outline: none;
-    background: #00bfff;
-    color: black;
-  }
-
-  h3 {
+  h1, h3 {
     color: white;
-    margin-top: 0;
+    margin: 10px 0;
+  }
+
+  button {
+    width: 80%;
+    max-width: 600px;
+    margin: 12px 0;
+    padding: 20px;
+    font-size: 22px;
+    background-color: #00bfff;
+    color: black;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    text-align: center;
+  }
+
+  button:focus {
+    outline: 4px solid #fff;
+    background-color: #0077aa;
+    color: white;
   }
 </style>
 </head>
 <body>
 
-<div id="categories">
-  <h3>Categories</h3>
-</div>
-
-<div id="streams">
-  <h3>Streams</h3>
-  <p>Select a category</p>
+<h1>Categories</h1>
+<div id="content">
+  <p>Loading categories...</p>
 </div>
 
 <script>
@@ -66,54 +54,60 @@ const username = "6743";
 const password = "4326";
 const baseAPI = `${server}/player_api.php?username=${username}&password=${password}`;
 
-
-// Load categories
-async function fetchCategories() {
+async function showCategories() {
   const res = await fetch(`${baseAPI}&action=get_live_categories`);
   const categories = await res.json();
-  const container = document.getElementById("categories");
+  const container = document.getElementById("content");
+  container.innerHTML = '';
 
   categories.forEach((cat, index) => {
-    const link = document.createElement("a");
-    link.textContent = cat.category_name;
-    link.href = "#";
-    link.tabIndex = 0;
-    link.onclick = () => fetchStreams(cat.category_id);
-    container.appendChild(link);
+    const btn = document.createElement("button");
+    btn.textContent = cat.category_name;
+    btn.onclick = () => showStreams(cat);
+    container.appendChild(btn);
 
-    
+    if (index === 0) setTimeout(() => btn.focus(), 200);
   });
 }
 
-// Load streams for selected category
-async function fetchStreams(categoryId) {
-  const res = await fetch(`${baseAPI}&action=get_live_streams&category_id=${categoryId}`);
+async function showStreams(category) {
+  const res = await fetch(`${baseAPI}&action=get_live_streams&category_id=${category.category_id}`);
   const streams = await res.json();
-  const container = document.getElementById("streams");
 
-  container.innerHTML = "<h3>Streams</h3>";
+  // Rewrite body content
+  const container = document.getElementById("content");
+  container.innerHTML = '';
 
+  // Back button
+  const backBtn = document.createElement("button");
+  backBtn.textContent = "← Back to Categories";
+  backBtn.onclick = () => showCategories();
+  container.appendChild(backBtn);
+
+  // Title
+  const title = document.createElement("h3");
+  title.textContent = category.category_name + " Streams";
+  container.appendChild(title);
+
+  // Stream buttons
   streams.forEach((stream, index) => {
-    const link = document.createElement("a");
-    link.textContent = stream.name;
-    link.href = "#";
-    link.tabIndex = 0;
-
-    link.onclick = () => {
+    const btn = document.createElement("button");
+    btn.textContent = stream.name;
+    btn.onclick = () => {
       const streamUrl = `${server}/live/${username}/${password}/${stream.stream_id}.ts`;
       const vlcUrl = `vlc://${streamUrl.replace("https://", "")}`;
       window.location.href = vlcUrl; // Launch VLC immediately
-      navigator.clipboard.writeText(streamUrl);
     };
+    container.appendChild(btn);
 
-    container.appendChild(link);
-
-    
+    if (index === 0) setTimeout(() => btn.focus(), 200);
   });
 }
 
-fetchCategories();
+// Initial load
+showCategories();
 </script>
 
 </body>
 </html>
+
