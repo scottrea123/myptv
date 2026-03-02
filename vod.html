@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Wave Canada On Demand</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #111;
+  color: white;
+  padding: 20px;
+}
+
+h1 { text-align: center; }
+
+#content {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  margin-top: 20px;
+}
+
+button {
+  padding: 10px;
+  font-size: 15px;
+  background: #00bfff;
+  color: black;
+  border: none;
+  border-radius: 6px;
+}
+
+button:focus {
+  outline: 3px solid white;
+  background: #0077aa;
+  color: white;
+}
+
+.top-button {
+  grid-column: 1 / -1;
+  background: #444;
+  color: white;
+}
+</style>
+</head>
+<body>
+
+<h1>Wave Canada On Demand</h1>
+<div id="content">Loading...</div>
+
+<script>
+const server = "https://wavecanada.app";
+const username = "6743";
+let password = "";
+
+// PASSWORD MEMORY
+window.addEventListener("load", () => {
+  const saved = localStorage.getItem("wave_password");
+  if (saved) {
+    password = saved;
+    showHome();
+  } else {
+    const entered = prompt("Enter your password:");
+    if (!entered) return;
+    password = entered;
+    if (confirm("Remember password?"))
+      localStorage.setItem("wave_password", password);
+    showHome();
+  }
+});
+
+const api = (action) =>
+`${server}/player_api.php?username=${username}&password=${password}&action=${action}`;
+
+function launchVLC(url) {
+  // VLC scheme for Android / Fire TV
+  window.location.href = "vlc://" + url;
+}
+
+function showHome() {
+  const c = document.getElementById("content");
+  c.innerHTML = "";
+
+  const vodBtn = document.createElement("button");
+  vodBtn.textContent = "🎬 VOD";
+  vodBtn.onclick = showVodCategories;
+
+  const seriesBtn = document.createElement("button");
+  seriesBtn.textContent = "📺 Series";
+  seriesBtn.onclick = showSeriesCategories;
+
+  c.appendChild(vodBtn);
+  c.appendChild(seriesBtn);
+
+  setTimeout(() => vodBtn.focus(), 200);
+}
+
+//////////////////////
+// VOD
+//////////////////////
+
+async function showVodCategories() {
+  const res = await fetch(api("get_vod_categories"));
+  const cats = await res.json();
+  renderCategoryList(cats, showVodStreams, showHome);
+}
+
+async function showVodStreams(category) {
+  const res = await fetch(api(`get_vod_streams&category_id=${category.category_id}`));
+  const items = await res.json();
+
+  const c = document.getElementById("content");
+  c.innerHTML = "";
+
+  c.appendChild(createBackButton(showVodCategories));
+
+  items.forEach(item => {
+    const btn = document.createElement("button");
+    btn.textContent = item.name;
+    btn.onclick = () => {
+      const url = `${server}/movie/${username}/${password}/${item.stream_id}.m3u8`;
+      launchVLC(url);
+    };
+    c.appendChild(btn);
+  });
+}
+
+//////////////////////
+// SERIES
+//////////////////////
+
+async function showSeriesCategories() {
+  const res = await fetch(api("get_series_categories"));
+  const cats = await res.json();
+  renderCategoryList(cats, showSeriesList, showHome);
+}
+
+async function showSeriesList(category) {
+  const res = await fetch(api(`get_series&category_id=${category.category_id}`));
+  const items = await res.json();
+
+  const c = document.getElementById("content");
+  c.innerHTML = "";
+
+  c.appendChild(createBackButton(showSeriesCategories));
+
+  items.forEach(item => {
+    const btn = document.createElement("button");
+    btn.textContent = item.name;
+    btn.onclick = () => showSeasons(item);
+    c.appendChild(btn);
+  });
+}
+
+async function showSeasons(series) {
+  const res = await fetch(api(`get_series_info&series_id=${series.series_id}`));
+  const data = await res.json();
+  const seasons = data.seasons;
+
+  const c = document.getElementById("content");
+  c.innerHTML = "";
+
+  c.appendChild(createBackButton(() => showSeriesList(series)));
+
+  seasons.forEach(season => {
+    const btn = document.createElement("button");
+    btn.textContent = "Season " + season.season_number;
+    btn.onclick = () => showEpisodes(data.episodes[season.season_number], series);
+    c.appendChild(btn);
+  });
+}
+
+function showEpisodes(episodes, series) {
+  const c = document.getElementById("content");
+  c.innerHTML = "";
+
+  c.appendChild(createBackButton(() => showSeasons(series)));
+
+  episodes.forEach(ep => {
+    const btn = document.createElement("button");
+    btn.textContent = ep.title;
+    btn.onclick = () => {
+      const url = `${server}/series/${username}/${password}/${ep.id}.m3u8`;
+      launchVLC(url);
+    };
+    c.appendChild(btn);
+  });
+}
+
+//////////////////////
+// HELPERS
+//////////////////////
+
+function renderCategoryList(cats, clickHandler, backFn) {
+  const c = document.getElementById("content");
+  c.innerHTML = "";
+
+  c.appendChild(createBackButton(backFn));
+
+  cats.forEach(cat => {
+    const btn = document.createElement("button");
+    btn.textContent = cat.category_name;
+    btn.onclick = () => clickHandler(cat);
+    c.appendChild(btn);
+  });
+}
+
+function createBackButton(fn) {
+  const back = document.createElement("button");
+  back.textContent = "← Back";
+  back.classList.add("top-button");
+  back.onclick = fn;
+  return back;
+}
+</script>
+
+</body>
+</html>
