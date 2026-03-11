@@ -138,6 +138,8 @@ async function showStreams(category) {
         `${server}/live/${username}/${password}/${stream.stream_id}.ts`;
       const vlcUrl = `vlc://${streamUrl.replace("https://", "")}`;
       window.location.href = vlcUrl;
+      console.log(streamUrl);
+      console.log(navigator.appVersion);
     };
 
     container.appendChild(btn);
