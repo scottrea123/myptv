@@ -140,6 +140,14 @@ async function showStreams(category) {
       window.location.href = vlcUrl;
       console.log(streamUrl);
       console.log(navigator.appVersion);
+      const userAgent = navigator.userAgent;
+      if (userAgent.includes("Windows")) {
+        console.log("Running on Windows");
+        navigator.clipboard.writeText(streamUrl);
+      }
+
+
+      
     };
 
     container.appendChild(btn);
