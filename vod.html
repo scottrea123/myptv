@@ -96,7 +96,7 @@ const api = (action) =>
 // VLC LAUNCH
 // =============================
 function launchVLC(url) {
-  window.location.href = "vlc://" + url;
+  window.location.href = "vlc://" + url.replace("https://","");
 }
 
 // =============================
