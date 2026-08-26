@@ -158,6 +158,7 @@ async function showVodStreams(category) {
       const ext = item.container_extension || "mp4";
       const url = `${server}/movie/${username}/${password}/${item.stream_id}.${ext}`;
       launchVLC(url);
+      alert(item.stream_id);
     };
 
     c.appendChild(btn);
@@ -218,6 +219,7 @@ function showEpisodes(episodes, series) {
       const ext = ep.container_extension || "mp4";
       const url = `${server}/series/${username}/${password}/${ep.id}.${ext}`;
       launchVLC(url);
+      alert(ep.id);
     };
 
     c.appendChild(btn);
