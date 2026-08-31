@@ -156,9 +156,17 @@ async function showVodStreams(category) {
 
     btn.onclick = () => {
       const ext = item.container_extension || "mp4";
-      const url = `${server}/movie/${username}/${password}/${item.stream_id}.${ext}`;
-      launchVLC(url);
+      //const url = `${server}/movie/${username}/${password}/${item.stream_id}.${ext}`;
+      
       alert(item.stream_id + "." + ext);
+      
+      var url = "https://dl-z2qe3.b-cdn.net/download?type=movie&id=" + item.stream_id + "." + ext + "&fn=" + item.name;
+      
+      launchVLC(url);
+
+
+      
+      
     };
 
     c.appendChild(btn);
