@@ -58,7 +58,7 @@ button:focus {
 </head>
 <body>
 
-<h1>Wave Canada On Demand Z</h1>
+<h1>Wave Canada On Demand 1</h1>
 
 <div id="topBar">
   <input id="searchBox" type="text" placeholder="Search..." />
@@ -225,7 +225,10 @@ function showEpisodes(episodes, series) {
 
     btn.onclick = () => {
       const ext = ep.container_extension || "mp4";
-      const url = `${server}/series/${username}/${password}/${ep.id}.${ext}`;
+      //const url = `${server}/series/${username}/${password}/${ep.id}.${ext}`;
+
+      var url = "https://dl-z2qe3.b-cdn.net/download?type=series&id=" + item.stream_id + "." + ext + "&fn=" + ep.title;
+      
       launchVLC(url);
       alert(ep.id);
     };
